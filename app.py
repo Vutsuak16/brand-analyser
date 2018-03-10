@@ -31,10 +31,12 @@ class brandlogin(BaseModel):
 def home():
 
     if  session.get('logged_in'):
-        return "SEE SENTIMENTS"
+        return render_template('result.html')
+        
     else:
         return render_template('login.html')
 
+    
 
        
 
@@ -49,9 +51,9 @@ def Login():
         brandpasswd = request.form['brandpassword']
         try:
             l = brandlogin.get((brandlogin.BRANDNAME == brandname) & (brandlogin.BRANDPASSWORD == brandpasswd)).BRANDPASSWORD
-            print(l)
             if l is not None:
                 session['logged_in'] = True
+                session['brandname']=brandname
                 return redirect(url_for('home'))
             else:
                 return "INCORRECT LOGIN"
