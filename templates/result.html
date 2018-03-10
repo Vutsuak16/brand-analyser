@@ -2,12 +2,13 @@
 {% block content %}
 {% if session['logged_in'] %}
 <a href="/logout">Logout</a> <br> <br>
+
 <br></br>
-<br></br>
-<br></br>
+<form method = "post">
+<input type="submit" name="Stream" value="sentiment">
+</form>
 <br></br>
 
- <p>{{session['brandname']}} logged in</p>
 
 {% else %}
 <p>Not logged in </p>
@@ -17,3 +18,4 @@
 
 {% endif %}
 {% endblock %}
+

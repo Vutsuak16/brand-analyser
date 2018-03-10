@@ -1,5 +1,10 @@
 from peewee import *
 from flask import Flask, url_for, render_template, request, redirect, session
+from tweetfeels import TweetFeels
+from threading import Thread
+import time
+from celery import Celery
+
 
 mysql_db = MySQLDatabase('sql9224506', user='sql9224506', password='NqDZ2Yd2yg',
                          host='sql9.freemysqlhosting.net', port=3306)
@@ -7,6 +12,14 @@ mysql_db = MySQLDatabase('sql9224506', user='sql9224506', password='NqDZ2Yd2yg',
 
 app = Flask(__name__)
 app.secret_key = 'very secret key here'
+
+# Celery configuration
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+
+# Initialize Celery
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
 
 class BaseModel(Model):
 
@@ -26,17 +39,54 @@ class brandlogin(BaseModel):
     BRANDNAME = CharField(max_length=50,unique=True)
     BRANDPASSWORD = CharField(max_length=50)
    
+class twitterkey(BaseModel):
+    id=IntegerField(primary_key=True)
+    CONSUMERKEY = CharField(max_length=150)
+    CONSUMERSECRET = CharField(max_length=150)
+    ACCESSTOKEN = CharField(max_length=150)
+    ACCESSTOKENSECRET=CharField(max_length=150)
+
+@celery.task
+def send_async_sentiments(feels):
+    
+    t_end = time.time() + 240
+    while time.time() < t_end:
+        try:
+            
+            feels.start()
+            time.sleep(4)
+            print(feels.sentiment.value)
+        except:
+            time.sleep(4)
+            print(feels.sentiment.value)
+            
+    feels.stop()
+    return
+
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
 
     if  session.get('logged_in'):
-        return render_template('result.html')
+        session['feel_value']=""
+        return redirect(url_for('result'))
         
     else:
         return render_template('login.html')
 
     
+@app.route('/result', methods =['GET','POST'])
+def result():
+    if request.method == 'POST':
+        consumer_key=twitterkey.get(twitterkey.id==1234).CONSUMERKEY
+        consumer_secret=twitterkey.get(twitterkey.id==1234).CONSUMERSECRET
+        access_token=twitterkey.get(twitterkey.id==1234).ACCESSTOKEN
+        access_token_secret=twitterkey.get(twitterkey.id==1234).ACCESSTOKENSECRET
+        login_credentials = [consumer_key, consumer_secret, access_token, access_token_secret]
+        feels = TweetFeels(login_credentials, tracking='trump')
+        send_async_sentiments(feels)
+
+    return render_template('result.html')
 
        
 
@@ -92,7 +142,6 @@ def logout():
     
     session['logged_in'] = False
     return redirect(url_for('home'))
-
 
 
 
