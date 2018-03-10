@@ -1,0 +1,10 @@
+{% block body %}
+  <ul >
+  {% for user in users %}
+  {% set link = "https://api.mlab.com/api/1/databases/hackerycom/collections/post/"+user.id+"?apiKey=vTPS_XjrufT1HcOTKxOcQKRlf4hrc9Nb" %}
+    <li><a href= {{ link }} >{{ user.title }}</a></li>
+  {% endfor %}
+  </ul>
+{% endblock %}
+
+

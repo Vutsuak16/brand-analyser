@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+{% if session['logged_in'] %}
+   
+	
+
+	<a href="/logout">Logout</a> <br> <br>
+	<form action="" method="POST">
+	  <input type="search" name="search" placeholder="Search">
+	  <input type="submit" value="Search">
+	</form>
+
+
+{% else %}
+<p>Not logged in </p>
+
+<a href="/login">Login</a> 
+<a href="/register">Register</a>
+
+{% endif %}
+{% endblock %}
