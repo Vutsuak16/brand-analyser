@@ -3,7 +3,6 @@ from flask import Flask, url_for, render_template, request, redirect, session
 from tweetfeels import TweetFeels
 from threading import Thread
 import time
-from celery import Celery
 
 
 mysql_db = MySQLDatabase('sql9224506', user='sql9224506', password='NqDZ2Yd2yg',
@@ -13,13 +12,6 @@ mysql_db = MySQLDatabase('sql9224506', user='sql9224506', password='NqDZ2Yd2yg',
 app = Flask(__name__)
 app.secret_key = 'very secret key here'
 
-# Celery configuration
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-
-# Initialize Celery
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-celery.conf.update(app.config)
 
 class BaseModel(Model):
 
@@ -33,7 +25,6 @@ class brandregister(BaseModel):
     BRANDEMAIL = CharField(max_length=50)
    
     
-
 class brandlogin(BaseModel):
     id=IntegerField(primary_key=True)
     BRANDNAME = CharField(max_length=50,unique=True)
@@ -46,22 +37,7 @@ class twitterkey(BaseModel):
     ACCESSTOKEN = CharField(max_length=150)
     ACCESSTOKENSECRET=CharField(max_length=150)
 
-@celery.task
-def send_async_sentiments(feels):
-    
-    t_end = time.time() + 240
-    while time.time() < t_end:
-        try:
-            
-            feels.start()
-            time.sleep(4)
-            print(feels.sentiment.value)
-        except:
-            time.sleep(4)
-            print(feels.sentiment.value)
-            
-    feels.stop()
-    return
+
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -83,12 +59,19 @@ def result():
         access_token=twitterkey.get(twitterkey.id==1234).ACCESSTOKEN
         access_token_secret=twitterkey.get(twitterkey.id==1234).ACCESSTOKENSECRET
         login_credentials = [consumer_key, consumer_secret, access_token, access_token_secret]
-        feels = TweetFeels(login_credentials, tracking='trump')
-        send_async_sentiments(feels)
+        feels = TweetFeels(login_credentials, tracking=['trump'])
+        t_end = time.time() + 60
+        while time.time() < t_end:
+            try:
+                feels.start()
+                time.sleep(4)
+                print(feels.sentiment.value)
+            except:
+                time.sleep(4)
+                print(feels.sentiment.value)
+        feels.stop()
 
     return render_template('result.html')
-
-       
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -108,7 +91,6 @@ def Login():
             else:
                 return "INCORRECT LOGIN"
                 
-
         except:
             return "INCORRECT LOGIN"
 
@@ -133,7 +115,6 @@ def register():
         except:
             return "username or email already in use"
         
-
         return render_template('login.html')
     return render_template('register.html')
 
@@ -142,7 +123,6 @@ def logout():
     
     session['logged_in'] = False
     return redirect(url_for('home'))
-
 
 
 
