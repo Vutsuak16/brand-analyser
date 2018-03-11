@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <script type="text/javascript" src="http://pubnub.github.io/eon/v/eon/1.0.0/eon.js"></script>
+<link type="text/css" rel="stylesheet" href="http://pubnub.github.io/eon/v/eon/1.0.0/eon.css"/>
+  </head>
+  <body>
+    <div id="chart1"></div>
+    <script>
+      var pubnub = new PubNub({
+        
+        subscribeKey: 'sub-c-8a88390c-241c-11e8-a8f3-22fca5d72012'
+      });
+      eon.chart({
+    pubnub   : pubnub,
+    history  : false,
+    channel  : 'kaja', 
+    flow     : true,
+    generate : {
+        bindto : '#chart',
+        data   : {
+            x      : 'x',
+            labels : true
+        },
+        axis : {
+            x : {
+                type : 'timeseries',
+                tick : {
+                    format : '%Y-%m-%d'
+                }
+            }
+        }
+    },
+    transform : function(data) {
+        return { columns : [
+            ['x', new Date().getTime()],
+            ['Value', data]
+        ] };
+    }
+});
+</script>
+       
+    </script>
+  </body>
+</html>

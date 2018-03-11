@@ -3,6 +3,8 @@ from flask import Flask, url_for, render_template, request, redirect, session
 from tweetfeels import TweetFeels
 from threading import Thread
 import time
+from pubnub.pnconfiguration import PNConfiguration
+from pubnub.pubnub import PubNub
 
 
 mysql_db = MySQLDatabase('sql9224506', user='sql9224506', password='NqDZ2Yd2yg',
@@ -37,8 +39,10 @@ class twitterkey(BaseModel):
     ACCESSTOKEN = CharField(max_length=150)
     ACCESSTOKENSECRET=CharField(max_length=150)
 
-
-
+pn_config = PNConfiguration()
+pn_config.subscribe_key = 'sub-c-8a88390c-241c-11e8-a8f3-22fca5d72012'
+pn_config.publish_key = 'pub-c-61a6bc46-301d-484c-887d-566b4bb5ff3d'
+pubnub = PubNub(pn_config)
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -61,14 +65,18 @@ def result():
         login_credentials = [consumer_key, consumer_secret, access_token, access_token_secret]
         feels = TweetFeels(login_credentials, tracking=['trump'])
         t_end = time.time() + 60
+        k=""
         while time.time() < t_end:
             try:
                 feels.start()
                 time.sleep(4)
-                print(feels.sentiment.value)
+                k=feels.sentiment.value
             except:
                 time.sleep(4)
-                print(feels.sentiment.value)
+            k=feels.sentiment.value
+            pubnub.publish().channel("kaja").message({
+                        'sentiment-value': k
+                    })
         feels.stop()
 
     return render_template('result.html')
